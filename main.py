@@ -8,6 +8,7 @@ J = 7
 N = 1
 T = 10
 
+M = 10**10
 valor = 2
 valor2 = 5
 # conjuntos
@@ -71,6 +72,13 @@ model.addConstrs((quicksum(r[i, t]+R[i, t] for i in i_c) <=
                   H for t in t_c[1:]), name="totalShelves")
 model.addConstrs((b[i, t] == b[i, t-1] * (1 - Beta[t-1]) + O[i, U[i], t-1] -
                   v[i, U[i], t-1] for i in i_c for t in t_c[1:]), name="garbageFlow")  # graaaaaaaave no es lineal
+model.addConstrs((M * Lambda[t] >= n[i, t-1] - n[i, t]
+                  for i in i_c for t in t_c[1:]), name="fruitExtraction")
+model.addConstrs((quicksum(n[i, t] * V[i] for i in i_c) <= A for t in t_c[1:]), name="maxStorage")
+model.addConstrs((quicksum(b[i, t] * V[i] for i in i_c) <= B for t in t_c[1:]), name="maxGarbage")
+model.addConstrs((w[i, t] <= Gamma[i, t] * M for i in i_c for t in t_c[1:]), name="buyDecision")
+model.addConstrs((O[i, 1, t] - w[i, t] == n[i, t] - n[i, t-1]
+                  for i in i_c for t in t_c[1:]), name="storageFlow")
 
 # funcion objetivo
 
@@ -80,6 +88,7 @@ model.setObjective(obj, GRB.MAXIMIZE)
 model.write("model.lp")
 
 # optimizar
-
+model.optimize()
 
 # resultados
+model.printAttr("X")
