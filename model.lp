@@ -22,9 +22,9 @@ Maximize
    + 0 v[1,7,4] + 0 v[1,7,5] + 0 v[1,7,6] + 0 v[1,7,7] + 0 v[1,7,8]
    + 0 v[1,7,9] + 0 v[1,7,10] + 0 w[1,0] - 2 w[1,1] - 2 w[1,2] - 2 w[1,3]
    - 2 w[1,4] - 2 w[1,5] - 2 w[1,6] - 2 w[1,7] - 2 w[1,8] - 2 w[1,9]
-   - 2 w[1,10] + 0 r[1,0] + 0 R[1,0] - Beta[1] - Beta[2] - Beta[3]
-   - Beta[4] - Beta[5] - Beta[6] - Beta[7] - Beta[8] - Beta[9] - Beta[10]
-   + 0 gamma[1,0] - 2 gamma[1,1] - 2 gamma[1,2] - 2 gamma[1,3]
+   - 2 w[1,10] + 0 r[1,0] + 0 R[1,0] + 0 Beta[0] - Beta[1] - Beta[2]
+   - Beta[3] - Beta[4] - Beta[5] - Beta[6] - Beta[7] - Beta[8] - Beta[9]
+   - Beta[10] + 0 gamma[1,0] - 2 gamma[1,1] - 2 gamma[1,2] - 2 gamma[1,3]
    - 2 gamma[1,4] - 2 gamma[1,5] - 2 gamma[1,6] - 2 gamma[1,7]
    - 2 gamma[1,8] - 2 gamma[1,9] - 2 gamma[1,10] + 0 Lambda[0] - Lambda[1]
    - Lambda[2] - Lambda[3] - Lambda[4] - Lambda[5] - Lambda[6] - Lambda[7]
@@ -140,6 +140,36 @@ Subject To
  totalShelves[8]: r[1,8] + R[1,8] <= 1
  totalShelves[9]: r[1,9] + R[1,9] <= 1
  totalShelves[10]: r[1,10] + R[1,10] <= 1
+ garbageFlow[1,1]: - O[1,5,0] - b[1,0] + b[1,1] + v[1,5,0] + e[1,0] = 0
+ garbageFlow[1,2]: - O[1,5,1] - b[1,1] + b[1,2] + v[1,5,1] + e[1,1] = 0
+ garbageFlow[1,3]: - O[1,5,2] - b[1,2] + b[1,3] + v[1,5,2] + e[1,2] = 0
+ garbageFlow[1,4]: - O[1,5,3] - b[1,3] + b[1,4] + v[1,5,3] + e[1,3] = 0
+ garbageFlow[1,5]: - O[1,5,4] - b[1,4] + b[1,5] + v[1,5,4] + e[1,4] = 0
+ garbageFlow[1,6]: - O[1,5,5] - b[1,5] + b[1,6] + v[1,5,5] + e[1,5] = 0
+ garbageFlow[1,7]: - O[1,5,6] - b[1,6] + b[1,7] + v[1,5,6] + e[1,6] = 0
+ garbageFlow[1,8]: - O[1,5,7] - b[1,7] + b[1,8] + v[1,5,7] + e[1,7] = 0
+ garbageFlow[1,9]: - O[1,5,8] - b[1,8] + b[1,9] + v[1,5,8] + e[1,8] = 0
+ garbageFlow[1,10]: - O[1,5,9] - b[1,9] + b[1,10] + v[1,5,9] + e[1,9] = 0
+ garbageDump[1,1]: e[1,1] - 1e+010 Beta[1] <= 0
+ garbageDump[1,2]: e[1,2] - 1e+010 Beta[2] <= 0
+ garbageDump[1,3]: e[1,3] - 1e+010 Beta[3] <= 0
+ garbageDump[1,4]: e[1,4] - 1e+010 Beta[4] <= 0
+ garbageDump[1,5]: e[1,5] - 1e+010 Beta[5] <= 0
+ garbageDump[1,6]: e[1,6] - 1e+010 Beta[6] <= 0
+ garbageDump[1,7]: e[1,7] - 1e+010 Beta[7] <= 0
+ garbageDump[1,8]: e[1,8] - 1e+010 Beta[8] <= 0
+ garbageDump[1,9]: e[1,9] - 1e+010 Beta[9] <= 0
+ garbageDump[1,10]: e[1,10] - 1e+010 Beta[10] <= 0
+ garbageDumpLimit[1,1]: - b[1,1] + e[1,1] <= 0
+ garbageDumpLimit[1,2]: - b[1,2] + e[1,2] <= 0
+ garbageDumpLimit[1,3]: - b[1,3] + e[1,3] <= 0
+ garbageDumpLimit[1,4]: - b[1,4] + e[1,4] <= 0
+ garbageDumpLimit[1,5]: - b[1,5] + e[1,5] <= 0
+ garbageDumpLimit[1,6]: - b[1,6] + e[1,6] <= 0
+ garbageDumpLimit[1,7]: - b[1,7] + e[1,7] <= 0
+ garbageDumpLimit[1,8]: - b[1,8] + e[1,8] <= 0
+ garbageDumpLimit[1,9]: - b[1,9] + e[1,9] <= 0
+ garbageDumpLimit[1,10]: - b[1,10] + e[1,10] <= 0
  fruitExtraction[1,1]: - n[1,0] + n[1,1] + 1e+010 Lambda[1] >= 0
  fruitExtraction[1,2]: - n[1,1] + n[1,2] + 1e+010 Lambda[2] >= 0
  fruitExtraction[1,3]: - n[1,2] + n[1,3] + 1e+010 Lambda[3] >= 0
@@ -190,26 +220,6 @@ Subject To
  storageFlow[1,8]: O[1,1,8] + n[1,7] - n[1,8] - w[1,8] = 0
  storageFlow[1,9]: O[1,1,9] + n[1,8] - n[1,9] - w[1,9] = 0
  storageFlow[1,10]: O[1,1,10] + n[1,9] - n[1,10] - w[1,10] = 0
- garbageFlow[1,1]: - O[1,5,0] - b[1,0] + b[1,1] + v[1,5,0] + [
-   b[1,0] * Beta[0] ] = 0
- garbageFlow[1,2]: - O[1,5,1] - b[1,1] + b[1,2] + v[1,5,1] + [
-   b[1,1] * Beta[1] ] = 0
- garbageFlow[1,3]: - O[1,5,2] - b[1,2] + b[1,3] + v[1,5,2] + [
-   b[1,2] * Beta[2] ] = 0
- garbageFlow[1,4]: - O[1,5,3] - b[1,3] + b[1,4] + v[1,5,3] + [
-   b[1,3] * Beta[3] ] = 0
- garbageFlow[1,5]: - O[1,5,4] - b[1,4] + b[1,5] + v[1,5,4] + [
-   b[1,4] * Beta[4] ] = 0
- garbageFlow[1,6]: - O[1,5,5] - b[1,5] + b[1,6] + v[1,5,5] + [
-   b[1,5] * Beta[5] ] = 0
- garbageFlow[1,7]: - O[1,5,6] - b[1,6] + b[1,7] + v[1,5,6] + [
-   b[1,6] * Beta[6] ] = 0
- garbageFlow[1,8]: - O[1,5,7] - b[1,7] + b[1,8] + v[1,5,7] + [
-   b[1,7] * Beta[7] ] = 0
- garbageFlow[1,9]: - O[1,5,8] - b[1,8] + b[1,9] + v[1,5,8] + [
-   b[1,8] * Beta[8] ] = 0
- garbageFlow[1,10]: - O[1,5,9] - b[1,9] + b[1,10] + v[1,5,9] + [
-   b[1,9] * Beta[9] ] = 0
 Bounds
 Binaries
  Beta[0] Beta[1] Beta[2] Beta[3] Beta[4] Beta[5] Beta[6] Beta[7] Beta[8]

@@ -37,6 +37,7 @@ h = {i: {j: valor for j in j_c[:U[i]]} for i in i_c}
 q = {i: valor2 for i in i_c}
 g = {i: valor2 for i in i_c}
 Alpha = 1
+a = 1
 H = 1
 S = 1
 
@@ -49,6 +50,7 @@ v = model.addVars(i_c, j_c, t_c, vtype=GRB.CONTINUOUS, name="v")
 w = model.addVars(i_c, t_c, vtype=GRB.CONTINUOUS, name="w")
 r = model.addVars(i_c, t_c, vtype=GRB.INTEGER, name="r")
 R = model.addVars(i_c, t_c, vtype=GRB.INTEGER, name="R")
+e = model.addVars(i_c, t_c, vtype=GRB.CONTINUOUS, name="e")
 Beta = model.addVars(t_c, vtype=GRB.BINARY, name="Beta")
 Gamma = model.addVars(i_c, t_c, vtype=GRB.BINARY, name="gamma")
 Lambda = model.addVars(t_c, vtype=GRB.BINARY, name="Lambda")
@@ -70,8 +72,10 @@ model.addConstrs((quicksum(O[i, j, t] for j in j_c[u[i]:U[i]]) * V[i]
                   <= K * R[i, t] for i in i_c for t in t_c[1:]), name="oldShelves")
 model.addConstrs((quicksum(r[i, t]+R[i, t] for i in i_c) <=
                   H for t in t_c[1:]), name="totalShelves")
-model.addConstrs((b[i, t] == b[i, t-1] * (1 - Beta[t-1]) + O[i, U[i], t-1] -
-                  v[i, U[i], t-1] for i in i_c for t in t_c[1:]), name="garbageFlow")  # graaaaaaaave no es lineal
+model.addConstrs((b[i, t] == b[i, t-1] - e[i, t-1] + O[i, U[i], t-1] -
+                  v[i, U[i], t-1] for i in i_c for t in t_c[1:]), name="garbageFlow")
+model.addConstrs((e[i, t] <= M * Beta[t] for i in i_c for t in t_c[1:]), name="garbageDump")
+model.addConstrs((e[i, t] <= b[i, t] for i in i_c for t in t_c[1:]), name="garbageDumpLimit")
 model.addConstrs((M * Lambda[t] >= n[i, t-1] - n[i, t]
                   for i in i_c for t in t_c[1:]), name="fruitExtraction")
 model.addConstrs((quicksum(n[i, t] * V[i] for i in i_c) <= A for t in t_c[1:]), name="maxStorage")
