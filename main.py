@@ -1,5 +1,5 @@
 from gurobipy import Model, GRB, quicksum
-
+from csv import DictReader
 # modelo
 
 model = Model()
@@ -18,15 +18,19 @@ i_c = [x for x in range(1, N+1)]
 t_c = [x for x in range(T+1)]
 
 # parametros
-p = {i: valor2 for i in i_c}
-P = {i: valor for i in i_c}
-C = {i: valor for i in i_c}
+with open("precio_fruta_nueva.csv", "r") as file:
+    p = {int(first["fruta"]): int(first["precio"]) for first in DictReader(file)}
+with open("precio_fruta_vieja.csv", "r") as file:
+    P = {int(first["fruta"]): int(first["precio"]) for first in DictReader(file)}
+with open("costo_fruta_almacen.csv", "r") as file:
+    C = {int(first["fruta"]): int(first["costo"]) for first in DictReader(file)}
 k = 10
 Q = {i: valor for i in i_c}
 d = {i: {t: valor for t in t_c} for i in i_c}
 D = {i: {t: valor for t in t_c} for i in i_c}
 Z = {i: valor for i in i_c}
-u = {i: valor for i in i_c}
+with open("limite_edad_nueva.csv", "r") as file:
+    u = {int(first["fruta"]): int(first["dias"]) for first in DictReader(file)}
 U = {i: valor2 for i in i_c}
 A = 10
 K = 100
