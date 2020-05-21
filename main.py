@@ -25,13 +25,16 @@ with open("precio_fruta_vieja.csv", "r") as file:
 with open("costo_fruta_almacen.csv", "r") as file:
     C = {int(first["fruta"]): int(first["costo"]) for first in DictReader(file)}
 k = 10
-Q = {i: valor for i in i_c}
+with open("costo_compra_fruta.csv", "r") as file:
+    Q = {int(first["fruta"]): int(first["costo"]) for first in DictReader(file)}
 d = {i: {t: valor for t in t_c} for i in i_c}
 D = {i: {t: valor for t in t_c} for i in i_c}
-Z = {i: valor for i in i_c}
+with open("costo_fijo_compra.csv", "r") as file:
+    Z = {int(first["fruta"]): int(first["costo"]) for first in DictReader(file)}
 with open("limite_edad_nueva.csv", "r") as file:
     u = {int(first["fruta"]): int(first["dias"]) for first in DictReader(file)}
-U = {i: valor2 for i in i_c}
+with open("limite_edad_compra.csv", "r") as file:
+    U = {int(first["fruta"]): int(first["dias"]) for first in DictReader(file)}
 A = 10
 K = 100
 B = 10
@@ -44,7 +47,7 @@ g = {i: 0 for i in i_c}
 Alpha = 1
 a = {i: 0 for i in i_c}
 H = 10
-S = 1
+S = 20
 
 # variables
 
