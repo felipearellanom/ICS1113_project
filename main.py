@@ -75,7 +75,9 @@ model.addConstrs((quicksum(r[i, t]+R[i, t] for i in i_c) <=
 model.addConstrs((b[i, t] == b[i, t-1] - e[i, t-1] + O[i, U[i], t-1] -
                   v[i, U[i], t-1] for i in i_c for t in t_c[1:]), name="garbageFlow")
 model.addConstrs((e[i, t] <= M * Beta[t] for i in i_c for t in t_c[1:]), name="garbageDump")
-model.addConstrs((e[i, t] <= b[i, t] for i in i_c for t in t_c[1:]), name="garbageDumpLimit")
+model.addConstrs((e[i, t] <= b[i, t] for i in i_c for t in t_c[1:]), name="garbageDumpUpperBound")
+model.addConstrs((b[i, t]-(1-Beta[t]) * M <= e[i, t]
+                  for i in i_c for t in t_c[1:]), name="garbageDumpLowerBound")
 model.addConstrs((M * Lambda[t] >= n[i, t-1] - n[i, t]
                   for i in i_c for t in t_c[1:]), name="fruitExtraction")
 model.addConstrs((quicksum(n[i, t] * V[i] for i in i_c) <= A for t in t_c[1:]), name="maxStorage")
