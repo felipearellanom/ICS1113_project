@@ -18,36 +18,44 @@ i_c = [x for x in range(1, N+1)]
 t_c = [x for x in range(T+1)]
 
 # parametros
-with open("precio_fruta_nueva.csv", "r") as file:
+with open("data/precio_fruta_nueva.csv", "r") as file:
     p = {int(first["fruta"]): int(first["precio"]) for first in DictReader(file)}
-with open("precio_fruta_vieja.csv", "r") as file:
+with open("data/precio_fruta_vieja.csv", "r") as file:
     P = {int(first["fruta"]): int(first["precio"]) for first in DictReader(file)}
-with open("costo_fruta_almacen.csv", "r") as file:
+with open("data/costo_fruta_almacen.csv", "r") as file:
     C = {int(first["fruta"]): int(first["costo"]) for first in DictReader(file)}
-k = 10
-with open("costo_compra_fruta.csv", "r") as file:
+
+with open("data/costo_compra_fruta.csv", "r") as file:
     Q = {int(first["fruta"]): int(first["costo"]) for first in DictReader(file)}
-d = {i: {t: valor for t in t_c} for i in i_c}
-D = {i: {t: valor for t in t_c} for i in i_c}
-with open("costo_fijo_compra.csv", "r") as file:
+with open("data/demanda_nueva.csv", "r") as file:
+    temp = {int(first["fruta"]): first for first in DictReader(file)}
+    d = {i: {t: float(temp[i][f"V{t}"]) for t in t_c[1:]} for i in i_c}
+with open("data/demanda_vieja.csv", "r") as file:
+    temp = {int(first["fruta"]): first for first in DictReader(file)}
+    D = {i: {t: float(temp[i][f"V{t}"]) for t in t_c[1:]} for i in i_c}
+with open("data/costo_fijo_compra.csv", "r") as file:
     Z = {int(first["fruta"]): int(first["costo"]) for first in DictReader(file)}
-with open("limite_edad_nueva.csv", "r") as file:
+with open("data/limite_edad_nueva.csv", "r") as file:
     u = {int(first["fruta"]): int(first["dias"]) for first in DictReader(file)}
-with open("limite_edad_compra.csv", "r") as file:
+with open("data/limite_edad_compra.csv", "r") as file:
     U = {int(first["fruta"]): int(first["dias"]) for first in DictReader(file)}
-A = 10
-K = 100
-B = 10
-E = 10
-V = {i: 0 for i in i_c}
+with open("data/variables_individuales.csv") as file:
+    temp = {first["variable"]: float(first["valor"]) for first in DictReader(file)}
+    k = temp["K"]
+    A = temp["A"]
+    K = temp["K"]
+    B = temp["B"]
+    E = temp["E"]
+    H = temp["H"]
+    S = temp["S"]
+with open("data/volumen_kilo.csv", "r") as file:
+    V = {int(first["fruta"]): float(first["volumen"]) for first in DictReader(file)}
 o = {i: {j: 0 for j in j_c[:U[i]]} for i in i_c}
 h = {i: {j: 0 for j in j_c[:U[i]]} for i in i_c}
 q = {i: 0 for i in i_c}
 g = {i: 0 for i in i_c}
 Alpha = 1
 a = {i: 0 for i in i_c}
-H = 10
-S = 20
 
 # variables
 
@@ -55,7 +63,7 @@ O = model.addVars(i_c, j_c, t_c, vtype=GRB.CONTINUOUS, name="O")
 n = model.addVars(i_c, t_c, vtype=GRB.CONTINUOUS, name="n")
 b = model.addVars(i_c, t_c, vtype=GRB.CONTINUOUS, name="b")
 v = model.addVars(i_c, j_c, t_c, vtype=GRB.CONTINUOUS, name="v")
-w = model.addVars(i_c, t_c, vtype=GRB.CONTINUOUS, name="w")
+w = model.addVars(i_c, t_c, vtype=GRB.INTEGER, name="w")
 r = model.addVars(i_c, t_c, vtype=GRB.INTEGER, name="r")
 R = model.addVars(i_c, t_c, vtype=GRB.INTEGER, name="R")
 e = model.addVars(i_c, t_c, vtype=GRB.CONTINUOUS, name="e")
@@ -119,5 +127,5 @@ model.optimize()
 # model.printAttr("X")
 vars = [(i, var) for i, var in enumerate(model.getVars())]
 for var in vars:
-    if var[1].x != 0:
+    if "w" in var[1].varName or "n" in var[1].varName:
         print(var[0], '%s %g' % (var[1].varName, var[1].x))
