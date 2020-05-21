@@ -4,41 +4,42 @@ from gurobipy import Model, GRB, quicksum
 
 model = Model()
 
-J = 7
-N = 1
-T = 10
+J = 22
+N = 12
+T = 21
 
 M = 10**10
-valor = 2
-valor2 = 5
+valor = 18
+valor2 = 21
 # conjuntos
 
 j_c = [x for x in range(1, J+1)]
 i_c = [x for x in range(1, N+1)]
 t_c = [x for x in range(T+1)]
+
 # parametros
-p = {i: valor for i in i_c}
+p = {i: valor2 for i in i_c}
 P = {i: valor for i in i_c}
 C = {i: valor for i in i_c}
-k = 1
+k = 10
 Q = {i: valor for i in i_c}
 d = {i: {t: valor for t in t_c} for i in i_c}
 D = {i: {t: valor for t in t_c} for i in i_c}
 Z = {i: valor for i in i_c}
 u = {i: valor for i in i_c}
 U = {i: valor2 for i in i_c}
-A = 1
-K = 1
-B = 1
-E = 1
-V = {i: valor for i in i_c}
-o = {i: {j: valor for j in j_c[:U[i]]} for i in i_c}
-h = {i: {j: valor for j in j_c[:U[i]]} for i in i_c}
-q = {i: valor2 for i in i_c}
-g = {i: valor2 for i in i_c}
+A = 10
+K = 100
+B = 10
+E = 10
+V = {i: 0 for i in i_c}
+o = {i: {j: 0 for j in j_c[:U[i]]} for i in i_c}
+h = {i: {j: 0 for j in j_c[:U[i]]} for i in i_c}
+q = {i: 0 for i in i_c}
+g = {i: 0 for i in i_c}
 Alpha = 1
-a = 1
-H = 1
+a = {i: 0 for i in i_c}
+H = 10
 S = 1
 
 # variables
@@ -74,8 +75,9 @@ model.addConstrs((quicksum(r[i, t]+R[i, t] for i in i_c) <=
                   H for t in t_c[1:]), name="totalShelves")
 model.addConstrs((b[i, t] == b[i, t-1] - e[i, t-1] + O[i, U[i], t-1] -
                   v[i, U[i], t-1] for i in i_c for t in t_c[1:]), name="garbageFlow")
-model.addConstrs((e[i, t] <= M * Beta[t] for i in i_c for t in t_c[1:]), name="garbageDump")
-model.addConstrs((e[i, t] <= b[i, t] for i in i_c for t in t_c[1:]), name="garbageDumpUpperBound")
+model.addConstrs((e[i, t] <= M * Beta[t]
+                  for i in i_c for t in t_c[1:]), name="garbageDumpUpperBound")
+model.addConstrs((e[i, t] <= b[i, t] for i in i_c for t in t_c[1:]), name="maxGarbageDump")
 model.addConstrs((b[i, t]-(1-Beta[t]) * M <= e[i, t]
                   for i in i_c for t in t_c[1:]), name="garbageDumpLowerBound")
 model.addConstrs((M * Lambda[t] >= n[i, t-1] - n[i, t]
@@ -85,6 +87,16 @@ model.addConstrs((quicksum(b[i, t] * V[i] for i in i_c) <= B for t in t_c[1:]), 
 model.addConstrs((w[i, t] <= Gamma[i, t] * M for i in i_c for t in t_c[1:]), name="buyDecision")
 model.addConstrs((O[i, 1, t] - w[i, t] == n[i, t] - n[i, t-1]
                   for i in i_c for t in t_c[1:]), name="storageFlow")
+
+# valores iniciales
+for i in i_c:
+    model.addConstrs((O[i, j, 0] == o[i][j] for j in j_c[:U[i]]), name=f"initialFruit[{i}]")
+    model.addConstrs((v[i, j, 0] == h[i][j] for j in j_c[:U[i]]), name=f"initialSales[{i}]")
+
+model.addConstrs((b[i, 0] == q[i] for i in i_c), name="initialGarbage")
+model.addConstrs((n[i, 0] == g[i] for i in i_c), name="initialStorage")
+model.addConstrs((e[i, 0] == a[i] for i in i_c), name="initialGarbageDump")
+model.addConstr(Beta[0] == Alpha, name="initialDumpDecision")
 
 # funcion objetivo
 
@@ -97,4 +109,8 @@ model.write("model.lp")
 model.optimize()
 
 # resultados
-model.printAttr("X")
+# model.printAttr("X")
+vars = [(i, var) for i, var in enumerate(model.getVars())]
+for var in vars:
+    if var[1].x != 0:
+        print(var[0], '%s %g' % (var[1].varName, var[1].x))
