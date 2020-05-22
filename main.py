@@ -31,23 +31,23 @@ with open("data/demanda_vieja.csv", "r") as file:
     temp = {int(first["fruta"]): first for first in DictReader(file)}
     D = {i: {t: float(temp[i][f"V{t}"]) for t in t_c[1:]} for i in i_c}
 with open("data/costo_fijo_compra.csv", "r") as file:
-    Z = {int(first["fruta"]): float(first["costo"])/1000 for first in DictReader(file)}
+    Z = {int(first["fruta"]): float(first["costo"])/10 for first in DictReader(file)}
 with open("data/limite_edad_nueva.csv", "r") as file:
     u = {int(first["fruta"]): int(first["dias"]) for first in DictReader(file)}
 with open("data/limite_edad_compra.csv", "r") as file:
     U = {int(first["fruta"]): int(first["dias"]) for first in DictReader(file)}
+with open("data/volumen_kilo.csv", "r") as file:
+    V = {int(first["fruta"]): float(first["volumen"]) for first in DictReader(file)}
 with open("data/parametros_individuales.csv") as file:
     temp = {first["parametro"]: float(first["valor"]) for first in DictReader(file)}
     k = temp["k"]
-    A = temp["A"]*10000
+    A = temp["A"]
     K = temp["K"]
     B = temp["B"]
     E = temp["E"]
-    H = temp["H"]*10
+    H = temp["H"]*2
     S = temp["S"]
-with open("data/volumen_kilo.csv", "r") as file:
-    V = {int(first["fruta"]): float(first["volumen"]) for first in DictReader(file)}
-o = {i: {j: 2 for j in j_c[:U[i]]} for i in i_c}
+o = {i: {j: 30 for j in j_c[:U[i]]} for i in i_c}
 h = {i: {j: 0 for j in j_c[:U[i]]} for i in i_c}
 q = {i: 0 for i in i_c}
 g = {i: 10 for i in i_c}
@@ -74,34 +74,52 @@ for i in i_c:
     model.addConstrs((O[i, j, t] == O[i, j-1, t-1] - v[i, j-1, t-1]
                       for j in j_c[1:U[i]] for t in t_c[1:]), name=f"ageFlow[{i}]")
     model.addConstrs((v[i, j, T] <= O[i, j, T] for j in j_c[:U[i]]), name=f"finalAge[{i}]")
+
 model.addConstrs((quicksum(v[i, j, t] for j in j_c[:u[i]]) <= d[i][t]
                   for i in i_c for t in t_c[1:]), name="newFruitDemand")
+
 model.addConstrs((quicksum(v[i, j, t] for j in j_c[u[i]:U[i]]) <= D[i][t]
                   for i in i_c for t in t_c[1:]), name="oldFruitDemand")
-model.addConstrs((quicksum(d[i][t] + D[i][t] - quicksum(v[i, j, t] for j in j_c[:U[i]])
-                           for i in i_c) <= S for t in t_c[1:]), name="demandSatistfaction")
+
+# model.addConstrs((quicksum(d[i][t] + D[i][t] - quicksum(v[i, j, t] for j in j_c[:U[i]])
+#                            for i in i_c) <= S for t in t_c[1:]), name="demandSatistfaction")
+
 model.addConstrs((quicksum(O[i, j, t] for j in j_c[:u[i]]) * V[i]
                   <= K * r[i, t] for i in i_c for t in t_c[1:]), name="newShelves")
+
 model.addConstrs((quicksum(O[i, j, t] for j in j_c[u[i]:U[i]]) * V[i]
                   <= K * R[i, t] for i in i_c for t in t_c[1:]), name="oldShelves")
+
 model.addConstrs((quicksum(r[i, t]+R[i, t] for i in i_c) <=
                   H for t in t_c[1:]), name="totalShelves")
+
 model.addConstrs((b[i, t] == b[i, t-1] - e[i, t-1] + O[i, U[i], t-1] -
                   v[i, U[i], t-1] for i in i_c for t in t_c[1:]), name="garbageFlow")
+
 model.addConstrs((e[i, t] <= M * Beta[t]
                   for i in i_c for t in t_c[1:]), name="garbageDumpUpperBound")
+
 model.addConstrs((e[i, t] <= b[i, t] for i in i_c for t in t_c[1:]), name="maxGarbageDump")
+
 model.addConstrs((b[i, t]-(1-Beta[t]) * M <= e[i, t]
                   for i in i_c for t in t_c[1:]), name="garbageDumpLowerBound")
+
 model.addConstrs((M * Lambda[t] >= n[i, t-1] - n[i, t]
                   for i in i_c for t in t_c[1:]), name="fruitExtraction")
+
 model.addConstrs((quicksum(n[i, t] * V[i] for i in i_c) <= A for t in t_c[1:]), name="maxStorage")
+
 model.addConstrs((quicksum(b[i, t] * V[i] for i in i_c) <= B for t in t_c[1:]), name="maxGarbage")
+
 model.addConstrs((w[i, t] <= Gamma[i, t] * M for i in i_c for t in t_c[1:]), name="buyDecision")
-model.addConstrs((10 - (1-Gamma[i, t]) * M <= w[i, t]
-                  for i in i_c for t in t_c[1:]), name="buyLowerBound")
-model.addConstrs((n[i, t] == n[i, t-1] - O[i, 1, t] - w[i, t]
+
+# model.addConstrs((10 - (1-Gamma[i, t]) * M <= w[i, t]
+#                   for i in i_c for t in t_c[1:]), name="buyLowerBound")
+
+model.addConstrs((n[i, t] == n[i, t-1] - O[i, 1, t] + w[i, t]
                   for i in i_c for t in t_c[1:]), name="storageFlow")
+
+model.addConstrs((n[i, t-1] >= (1-Gamma[i, t]) for i in i_c for t in t_c[1:]), name="buyForce")
 
 # valores iniciales
 for i in i_c:
@@ -126,6 +144,8 @@ model.optimize()
 # resultados
 # model.printAttr("X")
 vars = [(i, var) for i, var in enumerate(model.getVars())]
-for var in vars:
-    if var[1].x != 0:
-        print(var[0], '%s %g' % (var[1].varName, var[1].x))
+with open("resultados.txt", "w") as file:
+    file.write(f"{model.objVal}\n")
+    for var in vars:
+        if var[1].x != 0:
+            file.write('%s %g' % (var[1].varName, var[1].x)+"\n")
