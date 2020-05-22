@@ -5,8 +5,8 @@ from csv import DictReader
 model = Model()
 
 J = 21
-N = 10
-T = 21
+N = 12
+T = 42
 
 M = 10**6
 # conjuntos
@@ -33,7 +33,7 @@ with open("data/demanda_vieja.csv", "r") as file:
 for i in i_c:
     D[i][1] = 0
 with open("data/costo_fijo_compra.csv", "r") as file:
-    Z = {int(first["fruta"]): float(first["costo"]) for first in DictReader(file)}
+    Z = {int(first["fruta"]): float(first["costo"])/300 for first in DictReader(file)}
 with open("data/limite_edad_nueva.csv", "r") as file:
     u = {int(first["fruta"]): int(first["dias"]) for first in DictReader(file)}
 with open("data/limite_edad_compra.csv", "r") as file:
@@ -150,5 +150,5 @@ vars = [(i, var) for i, var in enumerate(model.getVars())]
 with open("resultados.txt", "w") as file:
     file.write(f"{model.objVal}\n")
     for var in vars:
-        if var[1].x != 0:
+        if var[1].x > 0:
             file.write('%s %g' % (var[1].varName, var[1].x)+"\n")
