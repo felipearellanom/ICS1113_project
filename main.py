@@ -6,9 +6,9 @@ model = Model()
 
 J = 22
 N = 12
-T = 21
+T = 42
 
-M = 10**10
+M = 10**6
 # conjuntos
 
 j_c = [x for x in range(1, J+1)]
@@ -17,9 +17,9 @@ t_c = [x for x in range(T+1)]
 
 # parametros
 with open("data/precio_fruta_nueva.csv", "r") as file:
-    p = {int(first["fruta"]): int(first["precio"]) for first in DictReader(file)}
+    p = {int(first["fruta"]): float(first["precio"]) for first in DictReader(file)}
 with open("data/precio_fruta_vieja.csv", "r") as file:
-    P = {int(first["fruta"]): int(first["precio"]) for first in DictReader(file)}
+    P = {int(first["fruta"]): float(first["precio"]) for first in DictReader(file)}
 with open("data/costo_fruta_almacen.csv", "r") as file:
     C = {int(first["fruta"]): int(first["costo"]) for first in DictReader(file)}
 with open("data/costo_compra_fruta.csv", "r") as file:
@@ -31,28 +31,26 @@ with open("data/demanda_vieja.csv", "r") as file:
     temp = {int(first["fruta"]): first for first in DictReader(file)}
     D = {i: {t: float(temp[i][f"V{t}"]) for t in t_c[1:]} for i in i_c}
 with open("data/costo_fijo_compra.csv", "r") as file:
-    Z = {int(first["fruta"]): int(first["costo"])/(10**4) for first in DictReader(file)}
-print(Z)
+    Z = {int(first["fruta"]): float(first["costo"])/1000 for first in DictReader(file)}
 with open("data/limite_edad_nueva.csv", "r") as file:
     u = {int(first["fruta"]): int(first["dias"]) for first in DictReader(file)}
 with open("data/limite_edad_compra.csv", "r") as file:
     U = {int(first["fruta"]): int(first["dias"]) for first in DictReader(file)}
 with open("data/parametros_individuales.csv") as file:
     temp = {first["parametro"]: float(first["valor"]) for first in DictReader(file)}
-    k = temp["K"]
-    A = temp["A"]
+    k = temp["k"]
+    A = temp["A"]*10000
     K = temp["K"]
     B = temp["B"]
     E = temp["E"]
-    H = temp["H"]
+    H = temp["H"]*10
     S = temp["S"]
 with open("data/volumen_kilo.csv", "r") as file:
     V = {int(first["fruta"]): float(first["volumen"]) for first in DictReader(file)}
-o = {i: {j: 5 for j in j_c[:U[i]]} for i in i_c}
-print(o)
+o = {i: {j: 2 for j in j_c[:U[i]]} for i in i_c}
 h = {i: {j: 0 for j in j_c[:U[i]]} for i in i_c}
 q = {i: 0 for i in i_c}
-g = {i: 0 for i in i_c}
+g = {i: 10 for i in i_c}
 Alpha = 1
 a = {i: 0 for i in i_c}
 
@@ -60,14 +58,14 @@ a = {i: 0 for i in i_c}
 
 O = model.addVars(i_c, j_c, t_c, vtype=GRB.CONTINUOUS, name="O")
 n = model.addVars(i_c, t_c, vtype=GRB.CONTINUOUS, name="n")
-b = model.addVars(i_c, t_c, vtype=GRB.CONTINUOUS, name="b")
 v = model.addVars(i_c, j_c, t_c, vtype=GRB.CONTINUOUS, name="v")
 w = model.addVars(i_c, t_c, vtype=GRB.CONTINUOUS, name="w")
 r = model.addVars(i_c, t_c, vtype=GRB.INTEGER, name="r")
 R = model.addVars(i_c, t_c, vtype=GRB.INTEGER, name="R")
+b = model.addVars(i_c, t_c, vtype=GRB.CONTINUOUS, name="b")
 e = model.addVars(i_c, t_c, vtype=GRB.CONTINUOUS, name="e")
 Beta = model.addVars(t_c, vtype=GRB.BINARY, name="Beta")
-Gamma = model.addVars(i_c, t_c, vtype=GRB.BINARY, name="gamma")
+Gamma = model.addVars(i_c, t_c, vtype=GRB.BINARY, name="Gamma")
 Lambda = model.addVars(t_c, vtype=GRB.BINARY, name="Lambda")
 model.update()
 
@@ -80,7 +78,7 @@ model.addConstrs((quicksum(v[i, j, t] for j in j_c[:u[i]]) <= d[i][t]
                   for i in i_c for t in t_c[1:]), name="newFruitDemand")
 model.addConstrs((quicksum(v[i, j, t] for j in j_c[u[i]:U[i]]) <= D[i][t]
                   for i in i_c for t in t_c[1:]), name="oldFruitDemand")
-model.addConstrs((quicksum(quicksum(v[i, j, t] for j in j_c[:U[i]]) - d[i][t] - D[i][t]
+model.addConstrs((quicksum(d[i][t] + D[i][t] - quicksum(v[i, j, t] for j in j_c[:U[i]])
                            for i in i_c) <= S for t in t_c[1:]), name="demandSatistfaction")
 model.addConstrs((quicksum(O[i, j, t] for j in j_c[:u[i]]) * V[i]
                   <= K * r[i, t] for i in i_c for t in t_c[1:]), name="newShelves")
@@ -100,6 +98,8 @@ model.addConstrs((M * Lambda[t] >= n[i, t-1] - n[i, t]
 model.addConstrs((quicksum(n[i, t] * V[i] for i in i_c) <= A for t in t_c[1:]), name="maxStorage")
 model.addConstrs((quicksum(b[i, t] * V[i] for i in i_c) <= B for t in t_c[1:]), name="maxGarbage")
 model.addConstrs((w[i, t] <= Gamma[i, t] * M for i in i_c for t in t_c[1:]), name="buyDecision")
+model.addConstrs((10 - (1-Gamma[i, t]) * M <= w[i, t]
+                  for i in i_c for t in t_c[1:]), name="buyLowerBound")
 model.addConstrs((n[i, t] == n[i, t-1] - O[i, 1, t] - w[i, t]
                   for i in i_c for t in t_c[1:]), name="storageFlow")
 
@@ -115,8 +115,8 @@ model.addConstr(Beta[0] == Alpha, name="initialDumpDecision")
 
 # funcion objetivo
 
-obj = quicksum(quicksum(p[i] * quicksum(v[i, j, t] for j in j_c[:u[i]+1]) + P[i] * quicksum(v[i, j, t] for j in j_c[u[i]:U[i]]
-                                                                                            ) - Q[i] * w[i, t] - C[i] * n[i, t] - Z[i] * Gamma[i, t] for i in i_c) - E * Beta[t] - k * Lambda[t] for t in t_c[1:])
+obj = quicksum(quicksum(p[i] * quicksum(v[i, j, t] for j in j_c[:u[i]]) + P[i] * quicksum(v[i, j, t] for j in j_c[u[i]:U[i]]
+                                                                                          ) - Q[i] * w[i, t] - C[i] * n[i, t] - Z[i] * Gamma[i, t] for i in i_c) - E * Beta[t] - k * Lambda[t] for t in t_c[1:])
 model.setObjective(obj, GRB.MAXIMIZE)
 model.write("model.lp")
 
