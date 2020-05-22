@@ -119,10 +119,10 @@ model.addConstrs((quicksum(b[i, t] * V[i] for i in i_c) <= B for t in t_c[1:]), 
 
 model.addConstrs((w[i, t] <= Gamma[i, t] * M for i in i_c for t in t_c[1:]), name="buyDecision")
 
+model.addConstrs((n[i, t-1] >= (1-Gamma[i, t]) for i in i_c for t in t_c[1:]), name="forceBuy")
+
 model.addConstrs((n[i, t] == n[i, t-1] - O[i, 1, t] + w[i, t]
                   for i in i_c for t in t_c[1:]), name="storageFlow")
-
-model.addConstrs((n[i, t-1] >= (1-Gamma[i, t]) for i in i_c for t in t_c[1:]), name="buyForce")
 
 # valores iniciales
 for i in i_c:
