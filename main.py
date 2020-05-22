@@ -8,7 +8,7 @@ J = 21
 N = 12
 T = 42
 
-M = 10**6
+M = 10**4
 # conjuntos
 
 j_c = [x for x in range(1, J+1)]
@@ -33,7 +33,7 @@ with open("data/demanda_vieja.csv", "r") as file:
 for i in i_c:
     D[i][1] = 0
 with open("data/costo_fijo_compra.csv", "r") as file:
-    Z = {int(first["fruta"]): float(first["costo"])/300 for first in DictReader(file)}
+    Z = {int(first["fruta"]): float(first["costo"])/200 for first in DictReader(file)}
 with open("data/limite_edad_nueva.csv", "r") as file:
     u = {int(first["fruta"]): int(first["dias"]) for first in DictReader(file)}
 with open("data/limite_edad_compra.csv", "r") as file:
