@@ -9,8 +9,6 @@ N = 12
 T = 21
 
 M = 10**10
-valor = 18
-valor2 = 21
 # conjuntos
 
 j_c = [x for x in range(1, J+1)]
@@ -24,7 +22,6 @@ with open("data/precio_fruta_vieja.csv", "r") as file:
     P = {int(first["fruta"]): int(first["precio"]) for first in DictReader(file)}
 with open("data/costo_fruta_almacen.csv", "r") as file:
     C = {int(first["fruta"]): int(first["costo"]) for first in DictReader(file)}
-
 with open("data/costo_compra_fruta.csv", "r") as file:
     Q = {int(first["fruta"]): int(first["costo"]) for first in DictReader(file)}
 with open("data/demanda_nueva.csv", "r") as file:
@@ -34,13 +31,14 @@ with open("data/demanda_vieja.csv", "r") as file:
     temp = {int(first["fruta"]): first for first in DictReader(file)}
     D = {i: {t: float(temp[i][f"V{t}"]) for t in t_c[1:]} for i in i_c}
 with open("data/costo_fijo_compra.csv", "r") as file:
-    Z = {int(first["fruta"]): int(first["costo"]) for first in DictReader(file)}
+    Z = {int(first["fruta"]): int(first["costo"])/(10**4) for first in DictReader(file)}
+print(Z)
 with open("data/limite_edad_nueva.csv", "r") as file:
     u = {int(first["fruta"]): int(first["dias"]) for first in DictReader(file)}
 with open("data/limite_edad_compra.csv", "r") as file:
     U = {int(first["fruta"]): int(first["dias"]) for first in DictReader(file)}
-with open("data/variables_individuales.csv") as file:
-    temp = {first["variable"]: float(first["valor"]) for first in DictReader(file)}
+with open("data/parametros_individuales.csv") as file:
+    temp = {first["parametro"]: float(first["valor"]) for first in DictReader(file)}
     k = temp["K"]
     A = temp["A"]
     K = temp["K"]
@@ -50,7 +48,8 @@ with open("data/variables_individuales.csv") as file:
     S = temp["S"]
 with open("data/volumen_kilo.csv", "r") as file:
     V = {int(first["fruta"]): float(first["volumen"]) for first in DictReader(file)}
-o = {i: {j: 0 for j in j_c[:U[i]]} for i in i_c}
+o = {i: {j: 5 for j in j_c[:U[i]]} for i in i_c}
+print(o)
 h = {i: {j: 0 for j in j_c[:U[i]]} for i in i_c}
 q = {i: 0 for i in i_c}
 g = {i: 0 for i in i_c}
@@ -63,7 +62,7 @@ O = model.addVars(i_c, j_c, t_c, vtype=GRB.CONTINUOUS, name="O")
 n = model.addVars(i_c, t_c, vtype=GRB.CONTINUOUS, name="n")
 b = model.addVars(i_c, t_c, vtype=GRB.CONTINUOUS, name="b")
 v = model.addVars(i_c, j_c, t_c, vtype=GRB.CONTINUOUS, name="v")
-w = model.addVars(i_c, t_c, vtype=GRB.INTEGER, name="w")
+w = model.addVars(i_c, t_c, vtype=GRB.CONTINUOUS, name="w")
 r = model.addVars(i_c, t_c, vtype=GRB.INTEGER, name="r")
 R = model.addVars(i_c, t_c, vtype=GRB.INTEGER, name="R")
 e = model.addVars(i_c, t_c, vtype=GRB.CONTINUOUS, name="e")
@@ -76,6 +75,7 @@ model.update()
 for i in i_c:
     model.addConstrs((O[i, j, t] == O[i, j-1, t-1] - v[i, j-1, t-1]
                       for j in j_c[1:U[i]] for t in t_c[1:]), name=f"ageFlow[{i}]")
+    model.addConstrs((v[i, j, T] <= O[i, j, T] for j in j_c[:U[i]]), name=f"finalAge[{i}]")
 model.addConstrs((quicksum(v[i, j, t] for j in j_c[:u[i]]) <= d[i][t]
                   for i in i_c for t in t_c[1:]), name="newFruitDemand")
 model.addConstrs((quicksum(v[i, j, t] for j in j_c[u[i]:U[i]]) <= D[i][t]
@@ -100,7 +100,7 @@ model.addConstrs((M * Lambda[t] >= n[i, t-1] - n[i, t]
 model.addConstrs((quicksum(n[i, t] * V[i] for i in i_c) <= A for t in t_c[1:]), name="maxStorage")
 model.addConstrs((quicksum(b[i, t] * V[i] for i in i_c) <= B for t in t_c[1:]), name="maxGarbage")
 model.addConstrs((w[i, t] <= Gamma[i, t] * M for i in i_c for t in t_c[1:]), name="buyDecision")
-model.addConstrs((O[i, 1, t] - w[i, t] == n[i, t] - n[i, t-1]
+model.addConstrs((n[i, t] == n[i, t-1] - O[i, 1, t] - w[i, t]
                   for i in i_c for t in t_c[1:]), name="storageFlow")
 
 # valores iniciales
@@ -127,5 +127,5 @@ model.optimize()
 # model.printAttr("X")
 vars = [(i, var) for i, var in enumerate(model.getVars())]
 for var in vars:
-    if "w" in var[1].varName or "n" in var[1].varName:
+    if var[1].x != 0:
         print(var[0], '%s %g' % (var[1].varName, var[1].x))
