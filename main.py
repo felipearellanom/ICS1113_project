@@ -33,7 +33,7 @@ with open("data/demanda_vieja.csv", "r") as file:
 for i in i_c:
     D[i][1] = 0
 with open("data/costo_fijo_compra.csv", "r") as file:
-    Z = {int(first["fruta"]): float(first["costo"])/200 for first in DictReader(file)}
+    Z = {int(first["fruta"]): float(first["costo"])/220 for first in DictReader(file)}
 with open("data/limite_edad_nueva.csv", "r") as file:
     u = {int(first["fruta"]): int(first["dias"]) for first in DictReader(file)}
 with open("data/limite_edad_compra.csv", "r") as file:
@@ -46,7 +46,7 @@ with open("data/parametros_individuales.csv") as file:
     A = temp["A"]
     K = temp["K"]
     B = temp["B"]
-    E = temp["E"]
+    E = temp["E"]/500
     H = temp["H"]*2
     S = temp["S"]
 with open("data/initial_fruit.csv", "r") as file:
@@ -71,7 +71,9 @@ e = model.addVars(i_c, t_c, vtype=GRB.CONTINUOUS, name="e")
 Beta = model.addVars(t_c, vtype=GRB.BINARY, name="Beta")
 Gamma = model.addVars(i_c, t_c, vtype=GRB.BINARY, name="Gamma")
 Lambda = model.addVars(t_c, vtype=GRB.BINARY, name="Lambda")
-
+total = model.addVar(vtype=GRB.CONTINUOUS, name="total")
+total_vieja = model.addVar(vtype=GRB.CONTINUOUS, name="totalVieja")
+total_nueva = model.addVar(vtype=GRB.CONTINUOUS, name="totalNueva")
 model.update()
 
 # restricciones
@@ -124,6 +126,13 @@ model.addConstrs((n[i, t-1] >= (1-Gamma[i, t]) for i in i_c for t in t_c[1:]), n
 model.addConstrs((n[i, t] == n[i, t-1] - O[i, 1, t] + w[i, t]
                   for i in i_c for t in t_c[1:]), name="storageFlow")
 
+model.addConstr((total == quicksum(quicksum(p[i] * quicksum(v[i, j, t] for j in j_c[:u[i]]) +
+                                            P[i] * quicksum(v[i, j, t] for j in j_c[u[i]:U[i]]) for i in i_c) for t in t_c[1:])))
+model.addConstr((total_nueva == quicksum(
+    quicksum(p[i] * quicksum(v[i, j, t] for j in j_c[:u[i]]) for i in i_c) for t in t_c[1:])))
+model.addConstr((total_vieja == quicksum(
+    quicksum(P[i] * quicksum(v[i, j, t] for j in j_c[u[i]:U[i]]) for i in i_c) for t in t_c[1:])))
+
 # valores iniciales
 for i in i_c:
     model.addConstrs((O[i, j, 0] == o[i][j] for j in j_c[:U[i]]), name=f"initialFruit[{i}]")
@@ -150,5 +159,7 @@ vars = [(i, var) for i, var in enumerate(model.getVars())]
 with open("resultados.txt", "w") as file:
     file.write(f"{model.objVal}\n")
     for var in vars:
-        if var[1].x > 0:
+        if "Beta" in var[1].varName or "Gamma" in var[1].varName or "Lambda" in var[1].varName:
             file.write('%s %g' % (var[1].varName, var[1].x)+"\n")
+        if "total" in var[1].varName:
+            print('%s %g' % (var[1].varName, var[1].x)+"\n")
