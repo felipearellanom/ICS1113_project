@@ -46,7 +46,7 @@ with open("data/parametros_individuales.csv") as file:
     A = temp["A"]
     K = temp["K"]
     B = temp["B"]
-    E = temp["E"]/500
+    E = temp["E"]
     H = temp["H"]*2
     S = temp["S"]
 with open("data/initial_fruit.csv", "r") as file:
