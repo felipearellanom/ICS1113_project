@@ -98,7 +98,7 @@ model.addConstrs((quicksum(O[i, j, t] for j in j_c[:u[i]]) * V[i]
 model.addConstrs((quicksum(O[i, j, t] for j in j_c[u[i]:U[i]]) * V[i]
                   <= K * R[i, t] for i in i_c for t in t_c[1:]), name="oldShelves")
 
-model.addConstrs((quicksum(r[i, t]+R[i, t] for i in i_c) <=
+model.addConstrs((quicksum(r[i, t]+R[i, t] for i in i_c) ==
                   H for t in t_c[1:]), name="totalShelves")
 
 model.addConstrs((b[i, t] == b[i, t-1] - e[i, t-1] + O[i, U[i], t-1] -
@@ -127,11 +127,11 @@ model.addConstrs((n[i, t] == n[i, t-1] - O[i, 1, t] + w[i, t]
                   for i in i_c for t in t_c[1:]), name="storageFlow")
 
 model.addConstr((total == quicksum(quicksum(p[i] * quicksum(v[i, j, t] for j in j_c[:u[i]]) +
-                                            P[i] * quicksum(v[i, j, t] for j in j_c[u[i]:U[i]]) for i in i_c) for t in t_c[1:])))
+                                            P[i] * quicksum(v[i, j, t] for j in j_c[u[i]:U[i]]) for i in i_c) for t in t_c[1:])), name="totalGains")
 model.addConstr((total_nueva == quicksum(
-    quicksum(p[i] * quicksum(v[i, j, t] for j in j_c[:u[i]]) for i in i_c) for t in t_c[1:])))
+    quicksum(p[i] * quicksum(v[i, j, t] for j in j_c[:u[i]]) for i in i_c) for t in t_c[1:])), name="newFruitGains")
 model.addConstr((total_vieja == quicksum(
-    quicksum(P[i] * quicksum(v[i, j, t] for j in j_c[u[i]:U[i]]) for i in i_c) for t in t_c[1:])))
+    quicksum(P[i] * quicksum(v[i, j, t] for j in j_c[u[i]:U[i]]) for i in i_c) for t in t_c[1:])), name="oldFruitGains")
 
 # valores iniciales
 for i in i_c:
@@ -156,6 +156,14 @@ model.optimize()
 # resultados
 # model.printAttr("X")
 vars = [(i, var) for i, var in enumerate(model.getVars())]
+with open("holguras.txt", "w") as file:
+    with open("antiholguras.txt", "w") as antifile:
+        for x in model.getConstrs():
+            if round(x.slack, 10) == 0:
+                if x.sense != "=":
+                    file.write(f"{x.ConstrName} {x.slack}\n")
+            else:
+                antifile.write(f"{x.ConstrName} {x.slack}\n")
 with open("resultados.txt", "w") as file:
     file.write(f"{model.objVal}\n")
     for var in vars:
