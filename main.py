@@ -9,6 +9,21 @@ N = 12
 T = 42
 
 M = 10**4
+
+# valores a editar para analisis de sensibilidad
+# 0.5 para reducción de 50% 1.5 para aumento de 50%
+
+# ponderador demanda_nueva
+d_x = 1
+# ponderador demanda_vieja
+D_x = 1
+# ponderador costo_fijo_compra
+Z_x = 1
+# ponderador precio_fruta_nueva
+p_x = 1
+# ponderador precio_fruta_vieja
+P_x = 1
+
 # conjuntos
 
 j_c = [x for x in range(1, J+1)]
@@ -17,23 +32,23 @@ t_c = [x for x in range(T+1)]
 
 # parametros
 with open("data/precio_fruta_nueva.csv", "r") as file:
-    p = {int(first["fruta"]): float(first["precio"]) for first in DictReader(file)}
+    p = {int(first["fruta"]): float(first["precio"])*p_x for first in DictReader(file)}
 with open("data/precio_fruta_vieja.csv", "r") as file:
-    P = {int(first["fruta"]): float(first["precio"]) for first in DictReader(file)}
+    P = {int(first["fruta"]): float(first["precio"])*P_x for first in DictReader(file)}
 with open("data/costo_fruta_almacen.csv", "r") as file:
     C = {int(first["fruta"]): int(first["costo"]) for first in DictReader(file)}
 with open("data/costo_compra_fruta.csv", "r") as file:
     Q = {int(first["fruta"]): int(first["costo"]) for first in DictReader(file)}
 with open("data/demanda_nueva.csv", "r") as file:
     temp = {int(first["fruta"]): first for first in DictReader(file)}
-    d = {i: {t: float(temp[i][f"V{t}"]) for t in t_c[1:]} for i in i_c}
+    d = {i: {t: float(temp[i][f"V{t}"])*d_x for t in t_c[1:]} for i in i_c}
 with open("data/demanda_vieja.csv", "r") as file:
     temp = {int(first["fruta"]): first for first in DictReader(file)}
-    D = {i: {t: float(temp[i][f"V{t}"]) for t in t_c[1:]} for i in i_c}
+    D = {i: {t: float(temp[i][f"V{t}"])*D_x for t in t_c[1:]} for i in i_c}
 for i in i_c:
     D[i][1] = 0
 with open("data/costo_fijo_compra.csv", "r") as file:
-    Z = {int(first["fruta"]): float(first["costo"])/220 for first in DictReader(file)}
+    Z = {int(first["fruta"]): float(first["costo"])*Z_x/220 for first in DictReader(file)}
 with open("data/limite_edad_nueva.csv", "r") as file:
     u = {int(first["fruta"]): int(first["dias"]) for first in DictReader(file)}
 with open("data/limite_edad_compra.csv", "r") as file:
